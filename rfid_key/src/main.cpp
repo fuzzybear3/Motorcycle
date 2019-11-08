@@ -35,8 +35,11 @@
 #define SS_PIN 10
 #define RST_PIN 9
 
+
+
 void printHex(byte *buffer, byte bufferSize);
 void printDec(byte *buffer, byte bufferSize);
+bool checkForKey(const byte keys[][]);
  
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
 
@@ -44,6 +47,13 @@ MFRC522::MIFARE_Key key;
 
 // Init array that will store new NUID 
 byte nuidPICC[4];
+
+
+const int NUM_KEYS = 2;
+const byte keys[NUM_KEYS][4]= {
+  {0x22, 0x22, 0x22, 0x22},
+  {0x33, 0x33, 0x33, 0x33}
+}
 
 void setup() { 
   Serial.begin(9600);
@@ -81,6 +91,8 @@ void loop() {
     return;
   }
 
+
+                                                            //checks old card dont need this
   if (rfid.uid.uidByte[0] != nuidPICC[0] || 
     rfid.uid.uidByte[1] != nuidPICC[1] || 
     rfid.uid.uidByte[2] != nuidPICC[2] || 
@@ -91,7 +103,11 @@ void loop() {
     for (byte i = 0; i < 4; i++) {
       nuidPICC[i] = rfid.uid.uidByte[i];
     }
-   
+
+
+
+
+          
     Serial.println(F("The NUID tag is:"));
     Serial.print(F("In hex: "));
     printHex(rfid.uid.uidByte, rfid.uid.size);
@@ -127,5 +143,33 @@ void printDec(byte *buffer, byte bufferSize) {
   for (byte i = 0; i < bufferSize; i++) {
     Serial.print(buffer[i] < 0x10 ? " 0" : " ");
     Serial.print(buffer[i], DEC);
+  }
+}
+
+
+bool checkForKey(const byte keys[][])
+{
+bool foundKey = false;
+bool skipKey = false;
+
+  for (int j = 0; j < NUM_KEYS; j++)
+  {
+    for (int i = 0; i < 4; i++)
+    {
+      if (rfid.uid.uidByte[i] != keys[j][i])
+      {
+        skipKey = true;
+        break;
+      }
+      if (skipKey)
+      {
+        break;
+      }
+      
+      //good key
+      foundKey = true;
+    }
+    
+    return(foundKey);
   }
 }
