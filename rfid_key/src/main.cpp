@@ -34,12 +34,14 @@
 
 #define SS_PIN 10
 #define RST_PIN 9
+#define LED 13
 
+const int NUM_KEYS = 2;
 
 
 void printHex(byte *buffer, byte bufferSize);
 void printDec(byte *buffer, byte bufferSize);
-bool checkForKey(const byte keys[][]);
+bool checkForKey(const byte keys[NUM_KEYS][4]);
  
 MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
 
@@ -48,25 +50,18 @@ MFRC522::MIFARE_Key key;
 // Init array that will store new NUID 
 byte nuidPICC[4];
 
-
-const int NUM_KEYS = 2;
 const byte keys[NUM_KEYS][4]= {
-  {0x22, 0x22, 0x22, 0x22},
-  {0x33, 0x33, 0x33, 0x33}
-}
+  {0x29, 0x5f, 0xfa, 0x97},
+  //{0x39, 0xfb, 0x81, 0xa2}
+   {0x39, 0xfb, 0x81, 0xa1} // test dummy
+};
 
 void setup() { 
   Serial.begin(9600);
   SPI.begin(); // Init SPI bus
   rfid.PCD_Init(); // Init MFRC522 
 
-  for (byte i = 0; i < 6; i++) {
-    key.keyByte[i] = 0xFF;
-  }
-
-  Serial.println(F("This code scan the MIFARE Classsic NUID."));
-  Serial.print(F("Using the following key:"));
-  printHex(key.keyByte, MFRC522::MF_KEY_SIZE);
+pinMode(LED, OUTPUT);
 }
  
 void loop() {
@@ -79,45 +74,30 @@ void loop() {
   if ( ! rfid.PICC_ReadCardSerial())
     return;
 
-  Serial.print(F("PICC type: "));
-  MFRC522::PICC_Type piccType = rfid.PICC_GetType(rfid.uid.sak);
-  Serial.println(rfid.PICC_GetTypeName(piccType));
-
-  // Check is the PICC of Classic MIFARE type
-  if (piccType != MFRC522::PICC_TYPE_MIFARE_MINI &&  
-    piccType != MFRC522::PICC_TYPE_MIFARE_1K &&
-    piccType != MFRC522::PICC_TYPE_MIFARE_4K) {
-    Serial.println(F("Your tag is not of type MIFARE Classic."));
-    return;
+  // Store NUID into nuidPICC array
+  for (byte i = 0; i < 4; i++) {
+    nuidPICC[i] = rfid.uid.uidByte[i];
   }
 
+bool test;
+  if (checkForKey(keys))
+  {
+    Serial.println("Access Granted");
+    digitalWrite(LED, HIGH);
 
-                                                            //checks old card dont need this
-  if (rfid.uid.uidByte[0] != nuidPICC[0] || 
-    rfid.uid.uidByte[1] != nuidPICC[1] || 
-    rfid.uid.uidByte[2] != nuidPICC[2] || 
-    rfid.uid.uidByte[3] != nuidPICC[3] ) {
-    Serial.println(F("A new card has been detected."));
-
-    // Store NUID into nuidPICC array
-    for (byte i = 0; i < 4; i++) {
-      nuidPICC[i] = rfid.uid.uidByte[i];
-    }
-
-
-
-
-          
-    Serial.println(F("The NUID tag is:"));
-    Serial.print(F("In hex: "));
-    printHex(rfid.uid.uidByte, rfid.uid.size);
-    Serial.println();
-    Serial.print(F("In dec: "));
-    printDec(rfid.uid.uidByte, rfid.uid.size);
-    Serial.println();
+    test = true;
   }
-  else Serial.println(F("Card read previously."));
-
+  else
+  {
+    Serial.println("Access Denied");
+    digitalWrite(LED, LOW);
+    test = false;
+  }
+  if (test)
+  {
+    digitalWrite(LED, HIGH);
+  }
+  
   // Halt PICC
   rfid.PICC_HaltA();
 
@@ -147,7 +127,7 @@ void printDec(byte *buffer, byte bufferSize) {
 }
 
 
-bool checkForKey(const byte keys[][])
+bool checkForKey(const byte keys[][4])
 {
 bool foundKey = false;
 bool skipKey = false;
@@ -169,7 +149,6 @@ bool skipKey = false;
       //good key
       foundKey = true;
     }
-    
-    return(foundKey);
   }
+  return(foundKey);
 }
