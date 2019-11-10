@@ -34,7 +34,7 @@
 
 #define SS_PIN 10
 #define RST_PIN 9
-#define LED 13
+#define MOSFET 2
 
 const int NUM_KEYS = 2;
 
@@ -61,7 +61,7 @@ void setup() {
   SPI.begin(); // Init SPI bus
   rfid.PCD_Init(); // Init MFRC522 
 
-pinMode(LED, OUTPUT);
+pinMode(MOSFET, OUTPUT);
 }
  
 void loop() {
@@ -83,19 +83,19 @@ bool test;
   if (checkForKey(keys))
   {
     Serial.println("Access Granted");
-    digitalWrite(LED, HIGH);
+    digitalWrite(MOSFET, HIGH);
 
     test = true;
   }
   else
   {
     Serial.println("Access Denied");
-    digitalWrite(LED, LOW);
+    digitalWrite(MOSFET, LOW);
     test = false;
   }
   if (test)
   {
-    digitalWrite(LED, HIGH);
+    digitalWrite(MOSFET, HIGH);
   }
   
   // Halt PICC
