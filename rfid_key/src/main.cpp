@@ -48,7 +48,7 @@ MFRC522 rfid(SS_PIN, RST_PIN); // Instance of the class
 MFRC522::MIFARE_Key key; 
 
 // Init array that will store new NUID 
-byte nuidPICC[4];
+byte nuidPICC[4];  
 
 const byte keys[NUM_KEYS][4]= {
   {0x29, 0x5f, 0xfa, 0x97},
