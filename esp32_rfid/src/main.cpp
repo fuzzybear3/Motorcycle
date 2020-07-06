@@ -52,8 +52,9 @@ byte nuidPICC[4];
 
 const byte keys[NUM_KEYS][4]= {
   {0x29, 0x5f, 0xfa, 0x97},
+  {0x64, 0x6F, 0xE3, 0xCD}
   //{0x39, 0xfb, 0x81, 0xa2}
-   {0x39, 0xfb, 0x81, 0xa1} // test dummy
+   //{0x39, 0xfb, 0x81, 0xa1} // test dummy
 };
 
 void setup() { 
@@ -78,6 +79,10 @@ void loop() {
   for (byte i = 0; i < 4; i++) {
     nuidPICC[i] = rfid.uid.uidByte[i];
   }
+
+  Serial.println(F("The NUID tag is:"));
+  Serial.print(F("In hex: "));
+  printHex(rfid.uid.uidByte, rfid.uid.size);
 
 bool test;
   if (checkForKey(keys))
@@ -130,12 +135,13 @@ void printDec(byte *buffer, byte bufferSize) {
 bool checkForKey(const byte keys[][4])
 {
 bool foundKey = false;
-bool skipKey = false;
+bool skipKey;
 
   for (int j = 0; j < NUM_KEYS; j++)
   {
     for (int i = 0; i < 4; i++)
     {
+      skipKey = false;
       if (rfid.uid.uidByte[i] != keys[j][i])
       {
         skipKey = true;
